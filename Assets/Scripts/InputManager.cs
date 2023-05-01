@@ -1,4 +1,3 @@
-using TMPro;
 using UnityEngine;
 
 public class InputManager : MonoBehaviour
@@ -8,127 +7,154 @@ public class InputManager : MonoBehaviour
     private bool _touchIsProcessed = false;
     private bool _isMoved = false;
     private bool _isZooming = false;
+    private bool _isFirstClick = true;
+    private bool _isDisableInput;
 
+    bool isMouseControl = false;
 
-    bool isMousControl = false;
-    private void Start()
+    private Board _board;
+    private bool _isInit;
+    private void Awake()
     {
+        EventManager.EndGame.AddListener(DisableInput);
+
 #if UNITY_EDITOR
-        isMousControl = true;
+        isMouseControl = true;
 #endif
+    }
+
+    public void Init(Board board)
+    {
+        _board = board;
+        _isFirstClick = true;
+        _isDisableInput = false;
+        _isInit = true;
     }
     private void Update()
     {
-        if(isMousControl)
+        if(!_isDisableInput && _isInit)
         {
-            if (Input.GetMouseButtonUp(0))
+            if (isMouseControl)
             {
-                Vector2 mousePosition = Camera.main.ScreenToWorldPoint(Input.mousePosition);
-                RaycastHit2D hit = Physics2D.Raycast(mousePosition, Vector2.zero);
-
-                if (hit.collider != null)
+                if (Input.GetMouseButtonUp(0))
                 {
-                    Tile tile = hit.collider.GetComponent<Tile>();
+                    Vector2 mousePosition = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+                    RaycastHit2D hit = Physics2D.Raycast(mousePosition, Vector2.zero);
 
-                    if (tile != null)
+                    if (hit.collider != null)
                     {
-                        EventManager.SendTileOpen(tile);
+                        ITile tile = hit.collider.GetComponent<ITile>();
+
+                        if (tile != null)
+                        {
+                            if (!_isFirstClick)
+                                _board.RevealTile(tile);
+                            else
+                            {
+                                EventManager.SendFirstClick();
+                                _board.RevalFirstTile(tile);
+                                _isFirstClick = false;
+                            }
+                        }
+                    }
+                }
+                else if (Input.GetMouseButtonUp(1) && !_isFirstClick)
+                {
+                    Vector2 mousePosition = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+                    RaycastHit2D hit = Physics2D.Raycast(mousePosition, Vector2.zero);
+
+                    if (hit.collider != null)
+                    {
+                        ITile tile = hit.collider.GetComponent<ITile>();
+
+                        if (tile != null)
+                            _board.FlagTile(tile);
                     }
                 }
             }
-            else if (Input.GetMouseButtonUp(1))
+            else
             {
-                Vector2 mousePosition = Camera.main.ScreenToWorldPoint(Input.mousePosition);
-                RaycastHit2D hit = Physics2D.Raycast(mousePosition, Vector2.zero);
-
-                if (hit.collider != null)
+                if (Input.touchCount == 0)
                 {
-                    Tile tile = hit.collider.GetComponent<Tile>();
+                    _isZooming = false;
+                    _isMoved = false;
+                }
+                else if (Input.touchCount == 2 && !_isZooming)
+                    _isZooming = true;
+                else if (Input.touchCount == 1 && !_isZooming && !_isMoved)
+                {
+                    Touch touch = Input.GetTouch(0);
 
-                    if (tile != null)
+                    switch (touch.phase)
                     {
-                        EventManager.SendTileMark(tile);
+                        case TouchPhase.Began:
+                            _touchIsProcessed = false;
+                            _pressTime = 0;
+                            break;
+
+                        case TouchPhase.Moved:
+                            if (touch.deltaPosition.magnitude > 5f)
+                            {
+                                _touchIsProcessed = true;
+                                _isMoved = true;
+                            }
+                            break;
+
+                        case TouchPhase.Stationary:
+                            _pressTime += Time.deltaTime;
+                            break;
+
+                        case TouchPhase.Ended:
+                        case TouchPhase.Canceled:
+                            if (_pressTime < _maxPressTime)
+                            {
+                                _touchIsProcessed = true;
+                                OpenTile(touch);
+                            }
+                            break;
+                    }
+
+                    if (!_isMoved && !_touchIsProcessed && _pressTime >= _maxPressTime)
+                    {
+                        _touchIsProcessed = true;
+                        FlagTile(touch);
                     }
                 }
             }
         }
-        else
-        {
-            if (Input.touchCount == 0)
-            {
-                _isZooming = false;
-                _isMoved = false;
-            }
-            else if (Input.touchCount == 2 && !_isZooming)
-                _isZooming = true;
-            else if (Input.touchCount == 1 && !_isZooming && !_isMoved)
-            {
-                Touch touch = Input.GetTouch(0);
-
-                switch (touch.phase)
-                {
-                    case TouchPhase.Began:
-                        _touchIsProcessed = false;
-                        _pressTime = 0;
-                        break;
-
-                    case TouchPhase.Moved:
-                        if (touch.deltaPosition.magnitude > 5f)
-                        {
-                            _touchIsProcessed = true;
-                            _isMoved = true;
-                        }
-                        break;
-
-                    case TouchPhase.Stationary:
-                        _pressTime += Time.deltaTime;
-                        break;
-
-                    case TouchPhase.Ended:
-                    case TouchPhase.Canceled:
-                        if (_pressTime < _maxPressTime)
-                        {
-                            _touchIsProcessed = true;
-                            OpenTile(touch);
-                        }
-                        break;
-                }
-
-                if (!_isMoved && !_touchIsProcessed && _pressTime >= _maxPressTime)
-                {
-                    _touchIsProcessed = true;
-                    FlagTile(touch);
-                }
-            }
-        }        
     }
 
     void OpenTile(Touch touch)
     {
-        Tile tile = TileSearch(touch);
+        ITile tile = TileSearch(touch);
         if (tile != null)
         {
-            EventManager.SendTileOpen(tile);
+            if (!_isFirstClick)
+                _board.RevealTile(tile);
+            else
+            {
+                EventManager.SendFirstClick();
+                _board.RevalFirstTile(tile);
+                _isFirstClick = false;
+            }
         }
     }
 
     void FlagTile(Touch touch)
     {
-        Tile tile = TileSearch(touch);
-        if (tile != null)
-        {
-            EventManager.SendTileMark(tile);
-        }
+        ITile tile = TileSearch(touch);
+        if (tile != null && !_isFirstClick)
+            _board.FlagTile(tile);
     }
 
-    Tile TileSearch(Touch touch)
+    ITile TileSearch(Touch touch)
     {
         Vector2 touchPosition = Camera.main.ScreenToWorldPoint(touch.position);
         RaycastHit2D hit = Physics2D.Raycast(touchPosition, Vector2.zero);
 
         if (hit.collider != null)
         {
-            Tile tile = hit.collider.GetComponent<Tile>();
+            ITile tile = hit.collider.GetComponent<ITile>();
 
             if (tile != null)
                 return tile;
@@ -137,5 +163,10 @@ public class InputManager : MonoBehaviour
         }
         else
             return null;
+    }
+
+    private void DisableInput()
+    {
+        _isDisableInput = true;
     }
 }

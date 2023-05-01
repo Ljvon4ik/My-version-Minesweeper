@@ -13,12 +13,16 @@ public class CameraMovement : MonoBehaviour
     private bool isOutOfBounds;
     private float _speedCamToBorder = 5f;
     private float _speedFix = 0.03f;
+    private Vector3 _center;
+    private bool _isLastActon;
+    private bool _isCenter;
 
     bool isMousControl = false;
 
-    private void Start()
+    private void Awake()
     {
         EventManager.StartGame.AddListener(Init);
+        EventManager.EndGame.AddListener(LastAction);
         _camera = GetComponent<Camera>();
 
 #if UNITY_EDITOR
@@ -28,46 +32,66 @@ public class CameraMovement : MonoBehaviour
 
     private void Update()
     {
-        if (isOutOfBounds)
-            MoveCameraToBorder();
-
-        if(isMousControl)
+        if(!_isLastActon)
         {
-            if (Input.GetMouseButton(1))
-            {
-                float horizontal = Input.GetAxis("Mouse X");
-                float vertical = Input.GetAxis("Mouse Y");
-                float ortoSize = _camera.orthographicSize;
-                _speed = ortoSize / 13f;
+            if (isOutOfBounds)
+                MoveToBorder();
 
-                Vector3 moveDirection = new Vector3(horizontal, vertical, 0f) * _speed * 100 * Time.deltaTime;
-                transform.position -= moveDirection;
+            if (isMousControl)
+            {
+                if (Input.GetMouseButton(1))
+                {
+                    float horizontal = Input.GetAxis("Mouse X");
+                    float vertical = Input.GetAxis("Mouse Y");
+                    float ortoSize = _camera.orthographicSize;
+                    _speed = ortoSize / 13f;
+
+                    Vector3 moveDirection = new Vector3(horizontal, vertical, 0f) * _speed * 100 * Time.deltaTime;
+                    transform.position -= moveDirection;
+                }
+                else if (Input.GetMouseButtonUp(1))
+                    BoundsCheck();
             }
-            else if (Input.GetMouseButtonUp(1))
-                BoundsCheck();
+            else
+            {
+                if (Input.touchCount == 1)
+                {
+                    Touch touch = Input.GetTouch(0);
+
+                    if (touch.phase == TouchPhase.Moved)
+                    {
+                        float ortoSize = _camera.orthographicSize;
+                        _speed = ortoSize * _speedFix;
+
+                        Vector2 touchDeltaPosition = touch.deltaPosition;
+
+                        Vector3 moveDirection = new Vector3(touchDeltaPosition.x, touchDeltaPosition.y, 0f) * _speed * Time.deltaTime;
+                        transform.position -= moveDirection;
+                    }
+                    else if (touch.phase == TouchPhase.Ended || touch.phase == TouchPhase.Canceled)
+                        BoundsCheck();
+                }
+            }
         }
         else
         {
-            if (Input.touchCount == 1)
+            if (!_isCenter)
             {
-                Touch touch = Input.GetTouch(0);
-
-                if (touch.phase == TouchPhase.Moved)
-                {
-                    float ortoSize = _camera.orthographicSize;
-                    _speed = ortoSize * _speedFix;
-
-                    Vector2 touchDeltaPosition = touch.deltaPosition;
-
-                    Vector3 moveDirection = new Vector3(touchDeltaPosition.x, touchDeltaPosition.y, 0f) * _speed * Time.deltaTime;
-                    transform.position -= moveDirection;
-                }
-                else if(touch.phase == TouchPhase.Ended || touch.phase == TouchPhase.Canceled)
-                    BoundsCheck();
+                MoveToCenter();
+                CenterCheck();
             }
         }
     }
 
+    private void Init(DataLevel dataLevel)
+    {
+        _maxPosX = dataLevel.WidthBoard - offset;
+        _maxPosY = dataLevel.HeightBoard - offset;
+        float centerX = (float)dataLevel.WidthBoard / 2 - offset;
+        float centerY = (float)dataLevel.HeightBoard / 2 - offset;
+        _center = new Vector3(centerX, centerY, transform.position.z);
+        transform.position = _center;
+    }
     private void BoundsCheck()
     {
         float xRounded = (float)Math.Round(transform.position.x, 2);
@@ -78,7 +102,7 @@ public class CameraMovement : MonoBehaviour
         else
             isOutOfBounds = true;
     }
-    private void MoveCameraToBorder()
+    private void MoveToBorder()
     {
         float targetX = Mathf.Clamp(transform.position.x, _minPosX, _maxPosX);
         float targetY = Mathf.Clamp(transform.position.y, _minPosY, _maxPosY);
@@ -88,13 +112,23 @@ public class CameraMovement : MonoBehaviour
 
         BoundsCheck();
     }
-    private void Init(DataLevel dataLevel)
+    private void MoveToCenter()
     {
-        _maxPosX = dataLevel.WidthBoard - offset;
-        _maxPosY = dataLevel.HeightBoard - offset;
-        float centerX = (float)dataLevel.WidthBoard / 2 - offset;
-        float centerY = (float)dataLevel.HeightBoard / 2 - offset;
-        Vector3 centerPos = new Vector3(centerX, centerY, transform.position.z);
-        transform.position = centerPos;
+        Vector3 currentPosition = Vector3.Lerp(transform.position, _center, _speedCamToBorder * Time.deltaTime);
+        transform.position = currentPosition;
     }
+    private void CenterCheck()
+    {
+        float difference = Mathf.Abs(transform.position.sqrMagnitude - _center.sqrMagnitude);
+
+        if (difference < 0.01f)
+            _isCenter = true;
+        else
+            _isCenter = false;
+    }
+    private void LastAction()
+    {
+        _isLastActon = true;
+    }
+
 }

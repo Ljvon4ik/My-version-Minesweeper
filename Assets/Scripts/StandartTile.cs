@@ -1,15 +1,15 @@
 using UnityEngine;
-public class Tile : MonoBehaviour
+public class StandartTile : MonoBehaviour, ITile
 {
-    [SerializeField] private Sprite flagSprite;
-    [SerializeField] private Sprite tileSprite;
     public bool IsRevealed { get; private set; }
     public bool IsFlagged { get; private set; }
+    public bool IsBomb { get; set; }
+    public int XPos { get; set; }
+    public int YPos { get; set; }
+    public int AdjacentBombCount { get; set; }
 
-    public int x;
-    public int y;
-    public bool isBomb = false;
-    public int adjacentBombCount = 0;
+    [SerializeField] private Sprite flagSprite;
+    [SerializeField] private Sprite tileSprite;
 
     public void Reveal()
     {

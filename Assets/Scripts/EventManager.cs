@@ -2,26 +2,23 @@ using UnityEngine.Events;
 
 public class EventManager
 {
-    public static UnityEvent<Tile> OnTileOpen = new UnityEvent<Tile>();
-    public static UnityEvent<Tile> OnTileMark = new UnityEvent<Tile>();
+    public static UnityEvent OnFirstClick = new UnityEvent();
     public static UnityEvent<DataLevel> StartGame = new UnityEvent<DataLevel>();
-    public static UnityEvent<bool> EndGame = new UnityEvent<bool>();
+    public static UnityEvent<bool> EndGameBool = new UnityEvent<bool>();
+    public static UnityEvent EndGame = new UnityEvent();
 
-    public static void SendTileOpen(Tile tile)
+    public static void SendFirstClick()
     {
-        OnTileOpen.Invoke(tile);
+        OnFirstClick.Invoke();
     }
 
-    public static void SendTileMark(Tile tile)
-    {
-        OnTileMark.Invoke(tile);
-    }
     public static void SendStartGame(DataLevel dataLevel)
     {
         StartGame.Invoke(dataLevel);
     }
     public static void SendEndGame(bool victory)
     {
-        EndGame.Invoke(victory);
+        EndGameBool.Invoke(victory);
+        EndGame.Invoke();
     }
 }
