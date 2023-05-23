@@ -1,31 +1,37 @@
-using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using Zenject;
 
 public class GameManager : MonoBehaviour
 {
-    [SerializeField] private LevelsDatabase _levelsDatabase;
-    private Board _board;
-    private InputManager _inputManager;
-    private Timer _timer;
+    private LevelsDatabase _levelsDatabase;
     private int _currentLevelNumber;
+    private StorageUIReference _storageUIReference;
 
-    private void Start()
+    [Inject]
+    private void Construct(LevelsDatabase levelsDatabase, StorageUIReference storageUIReference)
+    {
+        _levelsDatabase = levelsDatabase;
+        _storageUIReference = storageUIReference;
+    }
+
+    private void Awake()
     {
         EventManager.EndGameBool.AddListener(EndGame);
-        _board = this.AddComponent<Board>();
-        _timer = this.AddComponent<Timer>();
-        if(PlayerPrefs.HasKey("CurrentLevelNumber"))
+    }
+    private void Start()
+    {
+        _storageUIReference.RestartButton.onClick.AddListener(Restart);
+        _storageUIReference.ExitToMenuButton.onClick.AddListener(ExitToMenu);
+        if (PlayerPrefs.HasKey("CurrentLevelNumber"))
             CreatLevel(PlayerPrefs.GetInt("CurrentLevelNumber", 0));
     }
 
-    public void CreatLevel(int levelNumber)// запускается ивентом кнопки
+    public void CreatLevel(int levelNumber)
     {
         _currentLevelNumber = levelNumber;
         DataLevel dataLevel = _levelsDatabase.GetInfo((LevelType)levelNumber);
         EventManager.SendStartGame(dataLevel);
-        _inputManager = this.AddComponent<InputManager>();
-        _inputManager.Init(_board);
     }
 
     public void Restart()

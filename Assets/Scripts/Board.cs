@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
+using Zenject;
 
 public class Board : MonoBehaviour
 {
@@ -12,10 +13,19 @@ public class Board : MonoBehaviour
     private int _bombsCount;
     private int _bombsRemaining;
     private ITile[,] _tiles;
+    private HUD _hud;
+    private Canvas _canvas;
 
+
+    [Inject]
+    private void Construct(StorageUIReference storageUIReference)
+    {
+        _hud = storageUIReference.Hud.GetComponent<HUD>();
+        _canvas = storageUIReference.CanvasWorldSpace;
+    }
     private void Awake()
     {
-        EventManager.StartGame.AddListener(Init);
+        EventManager.StartGameData.AddListener(Init);
         EventManager.EndGame.AddListener(OpenAllBombs);
     }
 
@@ -53,7 +63,6 @@ public class Board : MonoBehaviour
             int x = Random.Range(0, _width);
             int y = Random.Range(0, _height);
 
-            // Проверяем, находится ли текущий тайл в исключаемом диапазоне
             if ((x >= xFirstPosTail - 1 && x <= xFirstPosTail + 1) && (y >= yFirstPosTail - 1 && y <= yFirstPosTail + 1))
             {
                 i--;
@@ -91,7 +100,7 @@ public class Board : MonoBehaviour
                 {
                     tile.AdjacentBombCount = adjacentBombs;
                     GameObject textObject = Instantiate(_textPrefab);
-                    textObject.transform.SetParent(UIManager.Instance.CanvasWorldSpace.transform, false);
+                    textObject.transform.SetParent(_canvas.transform, false);
                     textObject.transform.position = new Vector3(tile.XPos, tile.YPos, 0);
                     TextMeshProUGUI textMesh = textObject.GetComponent<TextMeshProUGUI>();
                     textMesh.text = adjacentBombs.ToString();
@@ -148,7 +157,7 @@ public class Board : MonoBehaviour
             _bombsRemaining++;
         }
 
-        UIManager.Instance.UpdateBombsCountText(_bombsRemaining);
+        _hud.UpdateBombsCountText(_bombsRemaining);
     }
 
     private void FloodFill(ITile tile)
@@ -236,9 +245,6 @@ public class Board : MonoBehaviour
             if (adjacentTiles.IsFlagged)
                 adjacentFlags++;
         }
-
         return adjacentFlags;
-    }
-
-    
+    }    
 }

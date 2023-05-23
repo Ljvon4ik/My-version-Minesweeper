@@ -1,4 +1,6 @@
+using System.Collections;
 using UnityEngine;
+using Zenject;
 
 public class InputManager : MonoBehaviour
 {
@@ -8,31 +10,32 @@ public class InputManager : MonoBehaviour
     private bool _isMoved = false;
     private bool _isZooming = false;
     private bool _isFirstClick = true;
-    private bool _isDisableInput;
+    private bool _isDisableInput = true;
 
     bool isMouseControl = false;
 
     private Board _board;
-    private bool _isInit;
+
+
+    [Inject]
+    private void Construct(Board board)
+    {
+        _board = board;
+    }
     private void Awake()
     {
+        EventManager.StartGame.AddListener(EnableInput);
         EventManager.EndGame.AddListener(DisableInput);
+
 
 #if UNITY_EDITOR
         isMouseControl = true;
 #endif
     }
 
-    public void Init(Board board)
-    {
-        _board = board;
-        _isFirstClick = true;
-        _isDisableInput = false;
-        _isInit = true;
-    }
     private void Update()
     {
-        if(!_isDisableInput && _isInit)
+        if(!_isDisableInput)
         {
             if (isMouseControl)
             {
@@ -168,5 +171,16 @@ public class InputManager : MonoBehaviour
     private void DisableInput()
     {
         _isDisableInput = true;
+    }
+
+    private void EnableInput()
+    {
+        StartCoroutine(DelayEnableInput());
+    }
+
+    private IEnumerator DelayEnableInput()
+    {
+        yield return new WaitForSeconds(0.2f);
+        _isDisableInput = false;
     }
 }

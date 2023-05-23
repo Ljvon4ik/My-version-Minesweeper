@@ -1,4 +1,3 @@
-using System;
 using UnityEngine;
 
 public class CameraZooming : MonoBehaviour
@@ -9,17 +8,22 @@ public class CameraZooming : MonoBehaviour
     private float _minSize = 5f;
 
     private float _initSize;
-    private int _speed = 3;
+    private float _initSizeSpeed = 3f;
     private bool _isLastAction;
     private bool _isInitSize;
     private float _endGameOffset = 1.2f;
 
     private float _timeLastSingleTouch = 0;
-    private float _doubleClickZoomDist = 500;
+
+    private bool _isDoubleClick;
+    private float _doubleClickSize;
+    private float _doubleClickSpeed = 3f;
+    private float _positioningPrecision = 0.2f;
+
 
     private void Awake()
     {
-        EventManager.StartGame.AddListener(GoStartSize);
+        EventManager.StartGameData.AddListener(Init);
         EventManager.EndGame.AddListener(LastAction);
         _camera = GetComponent<Camera>();
     }
@@ -39,8 +43,18 @@ public class CameraZooming : MonoBehaviour
             {
                 float timeDifference = Time.time - _timeLastSingleTouch;
                 _timeLastSingleTouch = Time.time;
-                if (timeDifference < 0.2f)
-                    Zooming(_doubleClickZoomDist);
+                if (timeDifference < 0.2f && _camera.orthographicSize > _minSize + _positioningPrecision)
+                {
+                    _doubleClickSize = Mathf.Clamp(_camera.orthographicSize * 0.75f, _minSize, _maxSize);
+                    _isDoubleClick = true;
+                }
+            }
+
+            if (_isDoubleClick)
+            {
+                ZoomingToSize(_doubleClickSize, _doubleClickSpeed);
+                if (CheckSize(_doubleClickSize, _positioningPrecision))
+                    _isDoubleClick = false;
             }
 
             if (Input.touchCount == 2)
@@ -63,8 +77,9 @@ public class CameraZooming : MonoBehaviour
         {
             if(!_isInitSize)
             {
-                ZoomingToInitSize();
-                CheckSize();
+                ZoomingToSize(_initSize * _endGameOffset, _initSizeSpeed);
+                if(CheckSize(_initSize * _endGameOffset, 0.1f))
+                    _isInitSize = true;
             }
         }
     }
@@ -76,25 +91,27 @@ public class CameraZooming : MonoBehaviour
         _camera.orthographicSize = Mathf.Clamp(_camera.orthographicSize, _minSize, _maxSize);
     }
 
-    private void GoStartSize(DataLevel dataLevel)
+    private void Init(DataLevel dataLevel)
     {
         _initSize = dataLevel.WidthBoard * Screen.height / Screen.width * 0.5f;
         _camera.orthographicSize = _initSize;
     }
 
-    private void ZoomingToInitSize()
+    private void ZoomingToSize(float targetSize, float speed)
     {
-        float currentSize = Mathf.Lerp(_camera.orthographicSize, _initSize * _endGameOffset, _speed * Time.deltaTime);
+        float currentSize = Mathf.Lerp(_camera.orthographicSize, targetSize, speed * Time.deltaTime);
         _camera.orthographicSize = currentSize;
+        _camera.orthographicSize = Mathf.Clamp(_camera.orthographicSize, _minSize, _maxSize);
     }
 
-    private void CheckSize()
+    private bool CheckSize(float targetSize, float precision)
     {
-        float difference = Mathf.Abs(_camera.orthographicSize - _initSize * _endGameOffset);
-        if (difference < 0.01f)
-            _isInitSize = true;
+        float difference = Mathf.Abs(_camera.orthographicSize - targetSize);
+
+        if (difference < precision)
+            return true;
         else
-            _isInitSize = false;
+            return false;
     }
     private void LastAction()
     {

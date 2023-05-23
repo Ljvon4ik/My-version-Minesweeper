@@ -6,7 +6,6 @@ public interface ITile
     public int XPos { get; set; }
     public int YPos { get; set; }
     public int AdjacentBombCount { get; set; }
-
     public void Reveal();
     public void Flag();
     public void Unflag();

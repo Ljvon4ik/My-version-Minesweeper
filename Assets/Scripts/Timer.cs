@@ -1,4 +1,5 @@
 using UnityEngine;
+using Zenject;
 
 public class Timer : MonoBehaviour
 {
@@ -6,6 +7,13 @@ public class Timer : MonoBehaviour
     private float _elapsedTime;
     private bool _isStopTimer = true;
     public float GameEndTime { get; private set; }
+    private HUD _hud;
+
+    [Inject]
+    private void Construct(StorageUIReference storageUIReference)
+    {
+        _hud = storageUIReference.Hud.GetComponent<HUD>();
+    }
 
     private void Awake()
     {
@@ -18,7 +26,7 @@ public class Timer : MonoBehaviour
         if (!_isStopTimer)
         {
             _elapsedTime = Mathf.Round(Time.time - _startTime);
-            UIManager.Instance.UpdateTimerText(_elapsedTime);
+            _hud.UpdateTimerText(_elapsedTime);
         }
     }
     public void StartTimer()

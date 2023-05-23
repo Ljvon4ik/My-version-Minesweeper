@@ -21,7 +21,7 @@ public class CameraMovement : MonoBehaviour
 
     private void Awake()
     {
-        EventManager.StartGame.AddListener(Init);
+        EventManager.StartGameData.AddListener(Init);
         EventManager.EndGame.AddListener(LastAction);
         _camera = GetComponent<Camera>();
 
