@@ -13,15 +13,14 @@ public class Board : MonoBehaviour
     private int _bombsCount;
     private int _bombsRemaining;
     private ITile[,] _tiles;
-    private HUD _hud;
     private Canvas _canvas;
-
+    private IMediator _mediator;
 
     [Inject]
-    private void Construct(StorageUIReference storageUIReference)
+    private void Construct(StorageUIReference storageUIReference, IMediator mediator)
     {
-        _hud = storageUIReference.Hud.GetComponent<HUD>();
         _canvas = storageUIReference.CanvasWorldSpace;
+        _mediator = mediator;
     }
     private void Awake()
     {
@@ -39,6 +38,7 @@ public class Board : MonoBehaviour
         _bombsCount = dataLevel.BombsCount;
         _bombsRemaining = _bombsCount;
         GenerateGrid();
+        _mediator.UpdateBombsCountTextHUD(_bombsRemaining);
     }
     private void GenerateGrid()
     {
@@ -157,7 +157,7 @@ public class Board : MonoBehaviour
             _bombsRemaining++;
         }
 
-        _hud.UpdateBombsCountText(_bombsRemaining);
+        _mediator.UpdateBombsCountTextHUD(_bombsRemaining);
     }
 
     private void FloodFill(ITile tile)

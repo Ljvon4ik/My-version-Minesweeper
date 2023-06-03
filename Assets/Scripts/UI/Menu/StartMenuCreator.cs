@@ -1,34 +1,23 @@
 using UnityEngine;
-using UnityEngine.UI;
 using Zenject;
 
 public class StartMenuCreator : MonoBehaviour
 {
     [SerializeField] private GameObject _scrollView;
     [SerializeField] private GameObject _panPref;
-    [SerializeField] private Button _startButton;
     private LevelsDatabase _levelsDatabase;
-    private SnapScrolling _snapScrolling;
-    private GameManager _gameManager;
+    public SnapScrolling SnapScrolling { get; private set; }
 
     [Inject]
-    private void Construct(GameManager gameManager, LevelsDatabase levelsDatabase)
+    private void Construct(LevelsDatabase levelsDatabase)
     {
-        _gameManager = gameManager;
         _levelsDatabase = levelsDatabase;
     }
 
     private void Start()
     {
-        _startButton.onClick.AddListener(StartLevel);
         SpawnPanPref();
-        _snapScrolling = _scrollView.AddComponent<SnapScrolling>();
-    }
-
-    private void StartLevel()
-    {
-        int levelID = _snapScrolling._selectedPanID;
-        _gameManager.CreatLevel(levelID);
+        SnapScrolling = _scrollView.AddComponent<SnapScrolling>();
     }
 
     private void SpawnPanPref()

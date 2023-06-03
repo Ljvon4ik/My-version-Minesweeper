@@ -10,7 +10,7 @@ public class StorageUIReference : MonoBehaviour
     [SerializeField] private Button _exitToMenuButton;
     [SerializeField] private Canvas _canvas;
     [SerializeField] private GameObject[] _windows;
-
+    [SerializeField] private Button _startButton;
 
     public Canvas CanvasWorldSpace => _canvasWorldSpace;
     public GameObject StartMenu => _startMenu;
@@ -19,14 +19,5 @@ public class StorageUIReference : MonoBehaviour
     public Button ExitToMenuButton => _exitToMenuButton;
     public Canvas Canvas => _canvas;
     public GameObject[] Windows => _windows;
-
-    //private void Awake()
-    //{
-    //    _windows = new GameObject[_canvas.transform.childCount];
-
-    //    for (int i = 0; i < _windows.Length; i++)
-    //    {
-    //        _windows[i] = _canvas.transform.GetChild(i).gameObject;
-    //    }
-    //}
+    public Button StartButton => _startButton;
 }

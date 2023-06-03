@@ -6,8 +6,11 @@ using UnityEngine.UI;
 public class SnapScrolling : MonoBehaviour, IEndDragHandler, IBeginDragHandler, IDragHandler
 {
     private int _panCount;
+    [Range(1f, 60f)]
     public float _panOffset = 40f;
+    [Range(1f, 10f)]
     public float _scaleOffset = 8f;
+    [Range(1f, 20f)]
     public float _scaleSpeed = 10f;
     private GameObject[] _panels;
     private Vector2[] _panelsPos;
@@ -15,7 +18,7 @@ public class SnapScrolling : MonoBehaviour, IEndDragHandler, IBeginDragHandler, 
     private RectTransform _contentRect;
     private ScrollRect _scrollRect;
     private GameObject _content;
-    public int _selectedPanID { get; private set; }
+    public int SelectedPanID { get; private set; }
 
     private void Start()
     {
@@ -32,7 +35,6 @@ public class SnapScrolling : MonoBehaviour, IEndDragHandler, IBeginDragHandler, 
             _panelsPos[i] = -_panels[i].transform.localPosition;
         }
         StartCoroutine(ScalePanelsAnimation());
-
     }
 
     public void OnBeginDrag(PointerEventData eventData)
@@ -56,10 +58,10 @@ public class SnapScrolling : MonoBehaviour, IEndDragHandler, IBeginDragHandler, 
             if (distance < nearstPos)
             {
                 nearstPos = distance;
-                _selectedPanID = i;
+                SelectedPanID = i;
             }
         }
-        StartCoroutine(SnapScrollingAnimation(_panelsPos[_selectedPanID]));
+        StartCoroutine(SnapScrollingAnimation(_panelsPos[SelectedPanID]));
         StartCoroutine(ScalePanelsAnimation());
     }
 

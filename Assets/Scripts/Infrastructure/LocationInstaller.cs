@@ -5,16 +5,17 @@ public class LocationInstaller : MonoInstaller
 {
     [SerializeField] LevelsDatabase levelsDatabase;
     [SerializeField] StorageUIReference storageUIReference;
+    [SerializeField] Mediator mediator;
 
     public override void InstallBindings()
     {
         BindLevelsDatabase();
         BindStorageUIReference();
+        BindMediator();
         BindBoard();
         BindInputManager();
-        BindTimer();
         BindGameManager();
-        BindWindowSwitch();
+        BindUIManager();
     }
 
     private void BindLevelsDatabase()
@@ -29,6 +30,14 @@ public class LocationInstaller : MonoInstaller
         Container
             .Bind<StorageUIReference>()
             .FromInstance(storageUIReference)
+            .AsSingle();
+    }
+
+    private void BindMediator()
+    {
+        Container
+            .Bind<IMediator>()
+            .FromInstance(mediator)
             .AsSingle();
     }
 
@@ -65,25 +74,14 @@ public class LocationInstaller : MonoInstaller
             .AsSingle();
     }
 
-    private void BindTimer()
+    private void BindUIManager()
     {
-        Timer timer = Container
-            .InstantiateComponent<Timer>(this.gameObject);
+        UIManager uIManager = Container
+            .InstantiateComponent<UIManager>(this.gameObject);
 
         Container
-            .Bind<Timer>()
-            .FromInstance(timer)
-            .AsSingle();
-    }
-
-    private void BindWindowSwitch()
-    {
-        WindowSwitch windowSwitch = Container
-            .InstantiateComponent<WindowSwitch>(this.gameObject);
-
-        Container
-            .Bind<WindowSwitch>()
-            .FromInstance(windowSwitch)
+            .Bind<UIManager>()
+            .FromInstance(uIManager)
             .AsSingle();
     }
 }

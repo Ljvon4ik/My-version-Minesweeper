@@ -1,26 +1,19 @@
 using UnityEngine;
-using Zenject;
 
-public class WindowSwitch : MonoBehaviour
+public class WindowSwitch : AbstrtactWindowSwitch
+{
+    public WindowSwitch(GameObject[] windows) : base(windows) {}
+}
+
+public abstract class AbstrtactWindowSwitch
 {
     private GameObject[] _windows;
-    private GameObject _startMenu;
-    private GameObject _hud;
-
-    [Inject]
-    private void Construct(StorageUIReference storageUIReference)
+    public AbstrtactWindowSwitch(GameObject[] windows)
     {
-        _windows = storageUIReference.Windows;
-        _startMenu = storageUIReference.StartMenu;
-        _hud = storageUIReference.Hud;
+        _windows = windows;
     }
 
-    private void Awake()
-    {
-        EventManager.StartGame.AddListener(delegate { ShowWindow(_hud); });
-    }
-
-    private void ShowWindow(GameObject window)
+    public void ShowOneWindow(GameObject window)
     {
         foreach (GameObject _window in _windows)
         {
